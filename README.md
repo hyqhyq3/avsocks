@@ -13,22 +13,45 @@
 - 需要有国外服务器才能。。。。（你懂的）
 
 ##安装
-
 windows客户端可以和linux服务器端通信
 
+##配置
+
+	[main]
+	#这里可以写client和server，本地填写client，服务器填写server
+	mode = client 
+	
+	[server]
+	#服务器监听的地址，在mode为server时起作用
+	listen = 0.0.0.0:1082
+	
+	[client]
+	#服务器的地址，填写运行server mode的服务器ip和端口
+	server = 199.193.249.182:1082
+	#本地socks5代理的ip和端口
+	listen = 127.0.0.1:1080
+	
+	[encrypto]
+	#用于加密的客户端密钥和服务器密钥
+	#客户端的client-key和服务器的client-key必须相同
+	#客户端的server-key和服务器的server-key也必须相同
+	client-key = 1234567890qwerty 
+	server-key = poiuytrewqasdfgh
+	#最后要有空行
+	
+
 ###windows用户
-可以直接在Download页面下载已编译版本，包含server和client，配置文件config.ini。
-服务器运行server.exe,客户端运行client.exe
+可以直接在Download页面下载已编译版本，包含newsocks.exe，配置文件config.ini。
 
 
 ###linux/mac用户
 首先需要有**Google go**环境
 
 	git clone http://github.com/hyqhyq3/newsocks
-	cd newsocks/client  ;;;;;如果是服务器，那么进入newsocks/server目录
+	cd newsocks  
 	go get github.com/kless/goconfig/config
 	go build
-	nohup ./client &	;;;;;如果是服务器，运行nohup ./server &
+	nohup ./newsocks &	
 
 ##重要提示
 配置文件最后一行必须要是空行，否则最后一行不会被解析
