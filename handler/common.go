@@ -27,7 +27,7 @@ func HandleStream(t net.Conn, f net.Conn, s cipher.Stream) {
 }
 
 func D(v ...interface{}) {
-	if true {
+	if false {
 		log.Print(v...)
 	}
 }
