@@ -5,18 +5,18 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
+
 	"errors"
+	"github.com/kless/goconfig/config"
 	"io"
 	"log"
 	"net"
 )
 
-var clientCipher, _ = aes.NewCipher([]byte("1234567887654321"))       // length must be 16
-var serverCipher, _ = aes.NewCipher([]byte("8765432112345678"))       //length must be 16
+var clientCipher, serverCipher cipher.Block
 var iv = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} //length must be 16
 
-var listen = "localhost:1083"
-var server = "localhost:1082"
+var listen, server string
 
 func handshake(conn net.Conn) (err error) {
 	b := make([]byte, 2)
@@ -73,6 +73,15 @@ func handle(conn net.Conn) {
 }
 
 func main() {
+	//read config
+	c, _ := config.ReadDefault("config.ini")
+	server, _ = c.String("client", "server")
+	listen, _ = c.String("client", "listen")
+	ck, _ := c.String("encrypto", "client-key")
+	sk, _ := c.String("encrypto", "server-key")
+	clientCipher, _ = aes.NewCipher([]byte(ck))
+	serverCipher, _ = aes.NewCipher([]byte(sk))
+
 	lsn, e := net.Listen("tcp", listen)
 	if e != nil {
 		log.Fatal(e)

@@ -5,14 +5,15 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"github.com/kless/goconfig/config"
 	"io"
 	"log"
 	"net"
 )
 
-var clientCipher, _ = aes.NewCipher([]byte("1234567887654321")) // length must be 8
-var serverCipher, _ = aes.NewCipher([]byte("8765432112345678"))
-var iv = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} //length must be 8
+var clientCipher cipher.Block
+var serverCipher cipher.Block
+var iv = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
 
 func readAndDecode(conn net.Conn, out []byte, s cipher.Stream) {
 	in := make([]byte, len(out))
@@ -108,7 +109,15 @@ func handle(conn net.Conn) {
 }
 
 func main() {
-	lsn, e := net.Listen("tcp", ":1082")
+	//read config
+	c, _ := config.ReadDefault("config.ini")
+	listen, _ := c.String("server", "listen")
+	ck, _ := c.String("encrypto", "client-key")
+	sk, _ := c.String("encrypto", "server-key")
+	clientCipher, _ = aes.NewCipher([]byte(ck))
+	serverCipher, _ = aes.NewCipher([]byte(sk))
+
+	lsn, e := net.Listen("tcp", listen)
 	if e != nil {
 		log.Fatal(e)
 	}
