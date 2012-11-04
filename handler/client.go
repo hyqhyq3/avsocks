@@ -14,6 +14,8 @@ type Client struct {
 	ClientCipher, ServerCipher cipher.Block
 }
 
+var connections = 0
+
 func handshake(conn net.Conn) (err error) {
 	b := make([]byte, 2)
 	_, err = conn.Read(b)
@@ -32,6 +34,10 @@ func handshake(conn net.Conn) (err error) {
 }
 
 func (c *Client) Handle(conn net.Conn) {
+
+	connections++
+	defer func() { connections-- }()
+	D("new connection ", connections)
 	defer conn.Close()
 	err := handshake(conn)
 	if err != nil {
