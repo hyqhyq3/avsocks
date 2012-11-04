@@ -9,6 +9,10 @@ import (
 var iv = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} //length must be 16
 
 func HandleStream(t net.Conn, f net.Conn, s cipher.Stream) {
+	defer func() {
+		t.Close()
+		f.Close()
+	}()
 	in := make([]byte, 1024*4)
 	out := make([]byte, 1024*4)
 	for {
@@ -17,12 +21,10 @@ func HandleStream(t net.Conn, f net.Conn, s cipher.Stream) {
 			s.XORKeyStream(out, in[:n])
 			_, err := t.Write(out[:n])
 			if err != nil {
-				f.Close()
-				break
+				return
 			}
 		} else {
-			t.Close()
-			break
+			return
 		}
 	}
 }

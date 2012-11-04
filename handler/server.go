@@ -36,6 +36,7 @@ func nl2int(nl []byte) int {
 }
 
 func (s *Server) Handle(conn net.Conn) {
+	defer conn.Close()
 	ccfb := cipher.NewCFBDecrypter(s.ClientCipher, iv)
 	scfb := cipher.NewCFBEncrypter(s.ServerCipher, iv)
 	out := make([]byte, 1024)
@@ -68,10 +69,10 @@ func (s *Server) Handle(conn net.Conn) {
 	addr.Port = nl2int(out)
 
 	sConn, err := net.DialTCP("tcp", nil, addr)
+	defer sConn.Close()
 	if err != nil {
 		log.Print("cannot connect to server", addr.String())
 		encodeAndWrite(conn, out[:10], scfb)
-		conn.Close()
 		return
 	}
 	response := make([]byte, 10)
@@ -82,6 +83,6 @@ func (s *Server) Handle(conn net.Conn) {
 	copy(response[4:], sConn.LocalAddr().(*net.TCPAddr).IP)
 	copy(response[8:], int2nl(sConn.LocalAddr().(*net.TCPAddr).Port))
 	encodeAndWrite(conn, response, scfb)
-	go HandleStream(sConn, conn, ccfb)
 	go HandleStream(conn, sConn, scfb)
+	HandleStream(sConn, conn, ccfb)
 }

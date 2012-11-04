@@ -32,20 +32,21 @@ func handshake(conn net.Conn) (err error) {
 }
 
 func (c *Client) Handle(conn net.Conn) {
+	defer conn.Close()
 	err := handshake(conn)
 	if err != nil {
 		log.Print("error when handshake")
-		conn.Close()
 		return
 	}
 	ccfb := cipher.NewCFBEncrypter(c.ClientCipher, iv)
 	scfb := cipher.NewCFBDecrypter(c.ServerCipher, iv)
 	sConn, err := net.Dial("tcp", c.Server)
+	defer sConn.Close()
 	if err != nil {
 		log.Print("cannot connect to server")
-		conn.Close()
 		return
 	}
-	go HandleStream(sConn, conn, ccfb)
+
 	go HandleStream(conn, sConn, scfb)
+	HandleStream(sConn, conn, ccfb)
 }
