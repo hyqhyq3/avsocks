@@ -30,6 +30,8 @@ windows客户端可以和linux服务器端通信
 	server = 199.193.249.182:1082
 	#本地socks5代理的ip和端口
 	listen = 127.0.0.1:1080
+	#开启http代理,不开启就留空
+	http_proxy = 127.0.0.1:808
 	
 	[encrypto]
 	#用于加密的客户端密钥和服务器密钥

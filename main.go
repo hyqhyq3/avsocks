@@ -10,7 +10,7 @@ import (
 	"net"
 )
 
-var mode, server, client_listen, server_listen, ck, sk string
+var mode, server, client_listen, server_listen, ck, sk, http_proxy string
 var clientCipher, serverCipher cipher.Block
 var handler Handler
 
@@ -23,6 +23,7 @@ func loadConfig() {
 	server_listen, _ = c.String("server", "listen")
 	ck, _ = c.String("encrypto", "client-key")
 	sk, _ = c.String("encrypto", "server-key")
+	http_proxy, _ = c.String("client", "http-proxy")
 }
 
 func loadFlags() {
@@ -32,11 +33,15 @@ func loadFlags() {
 	flag.StringVar(&server_listen, "server-listen", server_listen, "the ip and port of server to bind")
 	flag.StringVar(&ck, "client-key", ck, "the client key")
 	flag.StringVar(&sk, "server-key", sk, "the server key")
+	flag.StringVar(&http_proxy, "http-proxy", http_proxy, "the ip and port of http proxy server ")
 	flag.Parse()
 	log.Printf("mode:%s", mode)
-	log.Printf("server:%s", server)
 	if mode == "client" {
+		log.Printf("server:%s", server)
 		log.Printf("client-listen:%s", client_listen)
+		if http_proxy != "" {
+			log.Printf("http-proxy:%s", http_proxy)
+		}
 	} else {
 		log.Printf("server-listen:%s", server_listen)
 	}
@@ -73,10 +78,17 @@ func main() {
 	if e != nil {
 		log.Fatal(e)
 	}
+	defer lsn.Close()
+
+	if mode == "client" && http_proxy != "" {
+		go startHTTPProxyServer(http_proxy)
+	}
+
 	for {
 		conn, e := lsn.Accept()
 		if e != nil {
 			log.Print(e)
+			continue
 		}
 		go handler.Handle(conn)
 	}
