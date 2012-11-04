@@ -47,12 +47,11 @@ func (c *Client) Handle(conn net.Conn) {
 	ccfb := cipher.NewCFBEncrypter(c.ClientCipher, iv)
 	scfb := cipher.NewCFBDecrypter(c.ServerCipher, iv)
 	sConn, err := net.Dial("tcp", c.Server)
-	defer sConn.Close()
 	if err != nil {
 		log.Print("cannot connect to server")
 		return
 	}
-
+	defer sConn.Close()
 	go HandleStream(conn, sConn, scfb)
 	HandleStream(sConn, conn, ccfb)
 }

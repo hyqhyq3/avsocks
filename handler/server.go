@@ -69,12 +69,12 @@ func (s *Server) Handle(conn net.Conn) {
 	addr.Port = nl2int(out)
 
 	sConn, err := net.DialTCP("tcp", nil, addr)
-	defer sConn.Close()
 	if err != nil {
 		log.Print("cannot connect to server", addr.String())
 		encodeAndWrite(conn, out[:10], scfb)
 		return
 	}
+	defer sConn.Close()
 	response := make([]byte, 10)
 	response[0] = 5
 	response[1] = 0
