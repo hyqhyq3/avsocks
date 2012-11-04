@@ -67,11 +67,10 @@ func handle(conn net.Conn) {
 		return
 	}
 	addr := new(net.TCPAddr)
-	addr.IP = make([]byte, 4)
 	switch out[3] { //atyp
 	case 1: //ipv4
 		readAndDecode(conn, out[:4], ccfb)
-		copy(addr.IP, out[:4])
+		addr.IP = net.IPv4(out[0], out[1], out[2], out[3])
 	case 3: //domain
 		readAndDecode(conn, out[:1], ccfb)
 		l := out[0]
@@ -82,7 +81,7 @@ func handle(conn net.Conn) {
 			log.Print("cannot resolve ", host)
 			return
 		}
-		copy(addr.IP, addrs[0].To4())
+		addr.IP = addrs[0]
 	default:
 		log.Print("unsupport address type")
 		return
