@@ -13,6 +13,7 @@ import (
 
 var clientCipher cipher.Block
 var serverCipher cipher.Block
+var listen string
 var iv = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
 
 func readAndDecode(conn net.Conn, out []byte, s cipher.Stream) {
@@ -111,9 +112,12 @@ func handle(conn net.Conn) {
 func main() {
 	//read config
 	c, _ := config.ReadDefault("config.ini")
-	listen, _ := c.String("server", "listen")
+	listen, _ = c.String("server", "listen")
+	log.Printf("listen:%s", listen)
 	ck, _ := c.String("encrypto", "client-key")
+	log.Printf("client-key:%s", ck)
 	sk, _ := c.String("encrypto", "server-key")
+	log.Printf("server-key:%s", sk)
 	clientCipher, _ = aes.NewCipher([]byte(ck))
 	serverCipher, _ = aes.NewCipher([]byte(sk))
 

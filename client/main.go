@@ -76,9 +76,13 @@ func main() {
 	//read config
 	c, _ := config.ReadDefault("config.ini")
 	server, _ = c.String("client", "server")
+	log.Printf("server:%s", server)
 	listen, _ = c.String("client", "listen")
+	log.Printf("listen:%s", listen)
 	ck, _ := c.String("encrypto", "client-key")
+	log.Printf("client-key:%s", ck)
 	sk, _ := c.String("encrypto", "server-key")
+	log.Printf("server-key:%s", sk)
 	clientCipher, _ = aes.NewCipher([]byte(ck))
 	serverCipher, _ = aes.NewCipher([]byte(sk))
 
