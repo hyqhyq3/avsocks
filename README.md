@@ -15,7 +15,7 @@
 ##安装
 windows客户端可以和linux服务器端通信
 
-##配置
+##配置(config.ini)
 
 	[main]
 	#这里可以写client和server，本地填写client，服务器填写server
@@ -43,7 +43,7 @@ windows客户端可以和linux服务器端通信
 	
 
 ###windows用户
-可以直接在Download页面下载已编译版本，包含newsocks.exe，配置文件config.ini。
+可以直接在Download页面下载已编译版本，包含newsocks.exe,按照本页面给出的配置格式,保存为config.ini,放在与主程序同一目录
 
 
 ###linux/mac用户
@@ -51,13 +51,9 @@ windows客户端可以和linux服务器端通信
 
 	git clone http://github.com/hyqhyq3/newsocks
 	cd newsocks  
-	go get github.com/kless/goconfig/config
 	go build
+	;;;编辑config.ini
 	nohup ./newsocks &	
 
 ##重要提示
 配置文件最后一行必须要是空行，否则最后一行不会被解析
-
-##PS
-
-配置文件里面的那个ip是我的龟爬服务器，可以直接用
