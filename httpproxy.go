@@ -68,7 +68,7 @@ func HandleHTTP(conn net.Conn) {
 		port, _ = strconv.Atoi(slices[1])
 	}
 	domain = slices[0]
-	socks, err := net.Dial("tcp", client_listen)
+	socks, err := net.Dial("tcp", "localhost:1080")
 	if err != nil {
 		return
 	}
@@ -78,10 +78,7 @@ func HandleHTTP(conn net.Conn) {
 		log.Print("cannot connect to server")
 		return
 	}
-
-	if req.Method != "CONNECT" {
-		req.Write(socks)
-	}
+	req.Write(socks)
 	b := make([]byte, 1024*32)
 	var re, we error
 	var n int
