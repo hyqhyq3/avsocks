@@ -13,7 +13,7 @@ windows:
 	
 darwin:
 	mkdir -p dist/darwin/amd64
-	GOARCH=amd64 GOOS=darwin go build -o dist/windows/amd64/newsocks
+	GOARCH=amd64 GOOS=darwin go build -o dist/darwin/amd64/newsocks
 
 all-dist: linux windows darwin
 	
