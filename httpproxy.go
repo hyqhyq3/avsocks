@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -75,11 +76,13 @@ func HandleHTTP(conn net.Conn) {
 	defer socks.Close()
 	err = connectSocksServer(socks, domain, port)
 	if err != nil {
-		log.Print("cannot connect to server")
+		log.Printf("cannot connect to server:%s", req.Host)
 		return
 	}
 
-	if req.Method != "CONNECT" {
+	if req.Method == "CONNECT" {
+		io.WriteString(conn, "HTTP/1.1 200 OK\r\n\r\n")
+	} else {
 		req.Write(socks)
 	}
 	b := make([]byte, 1024*32)
@@ -87,12 +90,14 @@ func HandleHTTP(conn net.Conn) {
 	var n int
 	go func() {
 		b := make([]byte, 1024*4)
-		n, re = conn.Read(b)
-		if n > 0 {
-			_, we = socks.Write(b[:n])
-		}
-		if re != nil || we != nil {
-			return
+		for {
+			n, re = r.Read(b)
+			if n > 0 {
+				_, we = socks.Write(b[:n])
+			}
+			if re != nil || we != nil {
+				return
+			}
 		}
 	}()
 	for {
