@@ -1,11 +1,11 @@
 package main
 
 import (
-	. "./handler"
 	"crypto/aes"
 	"crypto/cipher"
 	"flag"
-	"./github.com/kless/goconfig/config"
+	"github.com/kless/goconfig/config"
+	. "hyq/newsocks/handler"
 	"log"
 	"net"
 )
