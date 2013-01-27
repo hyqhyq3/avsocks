@@ -1,5 +1,5 @@
 #Notice
-newsocks已改名avsocks，现在项目在 https://github.com/avplayer/avsocks ，使用C++改写，效率更高，bug更少
+##newsocks已改名avsocks，现在项目在 https://github.com/avplayer/avsocks ，使用C++改写，效率更高，bug更少
 
 #README
 
