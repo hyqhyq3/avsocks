@@ -1,5 +1,6 @@
 #include "avsocks_server.h"
 #include "socks5_proxy.h"
+#include <boost/asio/yield.hpp>
 
 avsocks_server::avsocks_server(asio::io_service& io, uint16_t port)
 	: io_(io)
@@ -8,21 +9,23 @@ avsocks_server::avsocks_server(asio::io_service& io, uint16_t port)
 
 }
 
-void avsocks_server::start(asio::yield_context yield)
+void avsocks_server::start(boost::system::error_code ec /* = boost::system::error_code() */)
 {
-	while (true)
+	reenter(coro_)
 	{
-		auto proxy = boost::make_shared<socks5_proxy>(io_);
-		boost::system::error_code ec;
-		acceptor_.async_accept(proxy->socket(), yield[ec]);
-		if (!ec)
+		do
 		{
-			std::cout << "accepted a connection" << std::endl;
-			asio::spawn(io_, boost::bind(&socks5_proxy::go, proxy, _1));
-		}
-		else
-		{
-			break;
-		}
+			new_client_.reset(new socks5_proxy(io_));
+			yield acceptor_.async_accept(new_client_->socket(), callback());
+			if (!ec)
+			{
+				std::cout << "accepted a connection" << std::endl;
+				fork new_client_->start();
+			}
+			else
+			{
+				break;
+			}
+		} while (coro_.is_parent());
 	}
 }

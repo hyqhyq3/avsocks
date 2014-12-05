@@ -1,5 +1,153 @@
 #include "socks5_proxy.h"
 #include <boost/lexical_cast.hpp>
+#include <boost/asio/yield.hpp>
+
+template<typename Stream, typename Buffer, typename Handler>
+struct async_read_socks5_auth_request_op : asio::coroutine
+{
+	Stream& m_stream;
+	Buffer& m_buffer;
+	Handler m_handler;
+
+	async_read_socks5_auth_request_op(Stream& stream, Buffer& buffer, Handler& handler) : m_stream(stream), m_buffer(buffer), m_handler(std::move(handler))
+	{
+
+	}
+
+	async_read_socks5_auth_request_op(const async_read_socks5_auth_request_op& other) : asio::coroutine(other), m_stream(other.m_stream), m_buffer(other.m_buffer), m_handler(std::move(other.m_handler))
+	{
+
+	}
+
+	void operator()(const boost::system::error_code& ec = boost::system::error_code(), std::size_t bytes_transfered = 0)
+	{
+		if (ec)
+		{
+			m_handler(ec, 0);
+			return;
+		}
+		reenter(this)
+		{
+			yield asio::async_read(m_stream, asio::buffer(&m_buffer.version, 1), *this);
+			yield asio::async_read(m_stream, asio::buffer(&m_buffer.nmethods, 1), *this);
+			yield asio::async_read(m_stream, asio::buffer(m_buffer.methods, m_buffer.nmethods), *this);
+			m_handler(ec, 0);
+		}
+	}
+
+};
+
+template<typename Stream, typename Buffer, typename Handler>
+BOOST_ASIO_INITFN_RESULT_TYPE(Handler, void(boost::system::error_code, std::size_t))
+async_read_socks5_auth_request(Stream& stream, Buffer& buffer, Handler&& handler)
+{
+	asio::detail::async_result_init<Handler, void(boost::system::error_code, std::size_t)> init(std::move(handler));
+	async_read_socks5_auth_request_op<Stream, Buffer, Handler>(stream, buffer, init.handler)();
+	return init.result.get();
+}
+
+template<typename Stream, typename Buffer, typename Handler>
+struct async_write_socks5_auth_reply_op : asio::coroutine
+{
+	Stream& m_stream;
+	const Buffer& m_buffer;
+	Handler m_handler;
+
+	async_write_socks5_auth_reply_op(Stream& stream, const Buffer& buffer, Handler& handler) : m_stream(stream), m_buffer(buffer), m_handler(std::move(handler))
+	{
+
+	}
+
+	async_write_socks5_auth_reply_op(const async_write_socks5_auth_reply_op& other) : asio::coroutine(other), m_stream(other.m_stream), m_buffer(other.m_buffer), m_handler(std::move(other.m_handler))
+	{
+
+	}
+
+	void operator()(const boost::system::error_code& ec = boost::system::error_code(), std::size_t bytes_transfered = 0)
+	{
+		if (ec)
+		{
+			m_handler(ec, 0);
+			return;
+		}
+		reenter(this)
+		{
+			yield asio::async_write(m_stream, asio::buffer(&m_buffer.version, 1), *this);
+			yield asio::async_write(m_stream, asio::buffer(&m_buffer.method, 1), *this);
+			m_handler(ec, 0);
+		}
+	}
+
+};
+
+template<typename Stream, typename Buffer, typename Handler>
+BOOST_ASIO_INITFN_RESULT_TYPE(Handler, void(boost::system::error_code, std::size_t))
+async_write_socks5_auth_reply(Stream& stream, const Buffer& buffer, Handler&& handler)
+{
+	asio::detail::async_result_init<Handler, void(boost::system::error_code, std::size_t)> init(std::move(handler));
+	async_write_socks5_auth_reply_op<Stream, Buffer, Handler>(stream, buffer, init.handler)();
+	return init.result.get();
+}
+
+template<typename Stream, typename Buffer, typename Handler>
+struct async_read_socks5_request_op : asio::coroutine
+{
+	Stream& m_stream;
+	Buffer& m_buffer;
+	Handler m_handler;
+
+	async_read_socks5_request_op(Stream& stream, Buffer& buffer, Handler& handler) : m_stream(stream), m_buffer(buffer), m_handler(std::move(handler))
+	{
+
+	}
+
+	async_read_socks5_request_op(const async_read_socks5_request_op& other) : asio::coroutine(other), m_stream(other.m_stream), m_buffer(other.m_buffer), m_handler(std::move(other.m_handler))
+	{
+
+	}
+
+	void operator()(const boost::system::error_code& ec = boost::system::error_code(), std::size_t bytes_transfered = 0)
+	{
+		if (ec)
+		{
+			m_handler(ec, 0);
+			return;
+		}
+		reenter(this)
+		{
+			yield asio::async_read(m_stream, asio::buffer(&m_buffer.version, 1), *this);
+			yield asio::async_read(m_stream, asio::buffer(&m_buffer.cmd, 1), *this);
+			yield asio::async_read(m_stream, asio::buffer(&m_buffer.reserved, 1), *this);
+			yield asio::async_read(m_stream, asio::buffer(&m_buffer.atype, 1), *this);
+			switch (m_buffer.atype)
+			{
+			case 1:
+				yield asio::async_read(m_stream, asio::buffer(m_buffer.addr.ipv4, 4), *this);
+				break;
+			case 3:
+				yield asio::async_read(m_stream, asio::buffer(&m_buffer.addr.domain.len, 1), *this);
+				yield asio::async_read(m_stream, asio::buffer(&m_buffer.addr.domain.host[0], m_buffer.addr.domain.len), *this);
+				break;
+			case 4:
+				yield asio::async_read(m_stream, asio::buffer(m_buffer.addr.ipv6, 16), *this);
+				break;
+			default:
+				break;
+			}
+			m_handler(ec, 0);
+		}
+	}
+
+};
+
+template<typename Stream, typename Buffer, typename Handler>
+BOOST_ASIO_INITFN_RESULT_TYPE(Handler, void(boost::system::error_code, std::size_t))
+async_read_socks5_request(Stream& stream, Buffer& buffer, Handler&& handler)
+{
+	asio::detail::async_result_init<Handler, void(boost::system::error_code, std::size_t)> init(std::move(handler));
+	async_read_socks5_request_op<Stream, Buffer, Handler>(stream, buffer, init.handler)();
+	return init.result.get();
+}
 
 socks5_proxy::socks5_proxy(asio::io_service& io)
 	: io_(io)
@@ -13,140 +161,28 @@ tcp::socket& socks5_proxy::socket()
 	return socket_;
 }
 
-void socks5_proxy::go(asio::yield_context yield)
+void socks5_proxy::start(boost::system::error_code ec /*= boost::system::error_code()*/, std::size_t bytes_transfered /*= 0*/)
 {
-	auto self = shared_from_this();
-	try {
-		std::array<uint8_t, 256> buf;
-		asio::async_read(socket_, asio::buffer(buf, 2), yield);
-		if (buf[0] != 5)
-		{
-			return;
-		}
-		int methods = buf[1];
-		asio::async_read(socket_, asio::buffer(buf, methods), yield);
-		// find no auth method
-		if (!std::find(&buf[0], &buf[methods], 0))
-		{
-			std::cout << "no suitable auth method" << std::endl;
-			return;
-		}
-		std::array<uint8_t, 2> auth = { 5, 0 };
-		asio::async_write(socket_, asio::buffer(auth), yield);
-
-		// read client request header
-		std::size_t n = asio::async_read(socket_, asio::buffer(header_, 4), yield);
-		if (header_[0] != 5)
-		{
-			return;
-		}
-		// cmd
-		switch (header_[1])
+	reenter(client_coro_)
+	{
+		yield async_read_socks5_auth_request(socket_, socks5_auth_method_request_, boost::bind(&socks5_proxy::start, shared_from_this(), _1, _2));
+		// send auth method
+		socks5_auth_method_reply_.version = 5;
+		socks5_auth_method_reply_.method = 0;
+		yield async_write_socks5_auth_reply(socket_, socks5_auth_method_reply_, boost::bind(&socks5_proxy::start, shared_from_this(), _1, _2));
+		yield async_read_socks5_request(socket_, socks5_request_, boost::bind(&socks5_proxy::start, shared_from_this(), _1, _2));
+		switch ((CommandType)socks5_request_.cmd)
 		{
 		case kConnect:
-			handle_connect(std::move(yield));
+			yield async_connect();
 			break;
 		case kBind:
 			break;
 		case kUdpAssociate:
 			break;
+		default:
+			break;
 		}
 	}
-	catch (std::exception e)
-	{
-		std::cout << e.what() << std::endl;
-		socket_.close();
-	}
-}
-
-void socks5_proxy::handle_connect(asio::yield_context yield)
-{
-	tcp::endpoint destination;
-	if (header_[3] == kIPv4)
-	{
-		uint32_t ip = 0;
-		uint16_t port = 0;
-		asio::async_read(socket_, asio::buffer(&ip, 4), yield);
-		asio::async_read(socket_, asio::buffer(&port, 2), yield);
-		
-		port = htons(port);
-
-		destination = tcp::endpoint(asio::ip::address_v4(ip), port);
-	}
-	else if (header_[3] == kDomain)
-	{
-		uint8_t len = 0;
-		std::string host;
-		uint16_t port = 0;
-		asio::async_read(socket_, asio::buffer(&len, 1), yield);
-		host.resize(len);
-		asio::async_read(socket_, asio::buffer(&host[0], len), yield);
-		asio::async_read(socket_, asio::buffer(&port, 2), yield);
-		
-		port = htons(port);
-
-		tcp::resolver resolver(io_);
-		destination = *resolver.async_resolve(tcp::resolver::query(host, boost::lexical_cast<std::string>(port)), yield);
-	}
-	else if (header_[3] = kIPv6)
-	{
-		std::array<uint8_t, 16> ip;
-		uint16_t port = 0;
-		asio::async_read(socket_, asio::buffer(ip, 16), yield);
-		asio::async_read(socket_, asio::buffer(&port, 2), yield);
-
-		port = htons(port);
-
-		destination = tcp::endpoint(asio::ip::address_v6(ip), port);
-	}
-	std::cout << "connecting " << destination << std::endl;
-	boost::system::error_code ec;
-	tcp::socket transport(io_);
-	transport.async_connect(destination, yield[ec]);
-	if (ec)
-	{
-		std::cout << ec.message() << std::endl;
-		return;
-	}
-	std::cout << "connected" << std::endl;
-
-	auto local_endpoint = transport.local_endpoint();
-	std::array<uint8_t, 4> reply = { 5, 0, 0 };
-	if (local_endpoint.protocol() == tcp::v4())
-	{
-		reply[3] = kIPv4;
-		std::array<uint8_t, 4> bind_address = local_endpoint.address().to_v4().to_bytes();
-		uint16_t bind_port = local_endpoint.port();
-		std::vector<asio::const_buffer> bufs = { asio::buffer(reply), asio::buffer(bind_address), asio::buffer(&bind_port, 2) };
-		asio::async_write(socket_, asio::buffer(bufs), yield);
-	}
-	else if (local_endpoint.protocol() == tcp::v6())
-	{
-		reply[3] = kIPv6;
-		std::array<uint8_t, 16> bind_address = local_endpoint.address().to_v6().to_bytes();
-		uint16_t bind_port = local_endpoint.port();
-		std::vector<asio::const_buffer> bufs = { asio::buffer(reply), asio::buffer(bind_address), asio::buffer(&bind_port, 2) };
-		asio::async_write(socket_, asio::buffer(reply), yield);
-	}
-
-	asio::spawn(yield, boost::bind(&socks5_proxy::pipe, this, _1, boost::ref(transport), boost::ref(socket_)));
-	asio::spawn(yield, boost::bind(&socks5_proxy::pipe, this, _1, boost::ref(socket_), boost::ref(transport)));
-}
-
-void socks5_proxy::pipe(asio::yield_context yield, tcp::socket& local, tcp::socket& remote)
-{
-	auto self = shared_from_this();
-	try {
-		std::array<uint8_t, 1024> buf;
-		while (true)
-		{
-			std::size_t n = local.async_read_some(asio::buffer(buf), yield);
-			asio::async_write(remote, asio::buffer(buf, n), yield);
-		}
-	}
-	catch (std::exception e)
-	{
-		local.close();
-		remote.close();
-	}
+	
 }

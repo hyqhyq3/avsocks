@@ -2,7 +2,6 @@
 #include <cstddef>
 #include <iostream>
 #include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
 namespace asio = boost::asio;
 using asio::ip::tcp;
 #include <boost/noncopyable.hpp>
